@@ -1,8 +1,17 @@
+<p align="center">
+  <img src="docs/hero.png" alt="Glance Dock: everything at a glance, one bar. The bar along the bottom of the screen, with music, a focus timer, todos and tools, the main apps, AI limits, GPUs and system meters, connections, sound and the clock." width="900">
+</p>
+
 # Glance Dock
 
-A GNOME Shell extension that replaces the Ubuntu Dock with one floating bar: your apps in the middle and live widgets on both sides.
+A GNOME Shell extension that replaces the Ubuntu Dock with one bar along the bottom of the screen: your main apps towards the middle, what you're working on to the left, and your machine to the right. It hides when you're not using it and comes back when you touch the bottom edge. Everything is in IBM Plex, with every number in Plex Mono.
 
-The bar runs left to right with its spare room shared evenly between the sections.
+<p align="center">
+  <img src="docs/bar-left.png" alt="The left half of the bar: now playing, the focus timer, todos and tools (notes, terminal, screenshot, folders, Google Drive), the main apps, and the AI limits." width="900">
+  <img src="docs/bar-right.png" alt="The right half of the bar: GPUs, CPU, memory and disk meters; network, VPN and Bluetooth; sound, show desktop and notifications; weather, day progress and the clock; and power." width="900">
+</p>
+
+The bar runs left to right with its spare room shared evenly between the sections. Click any section for more: a card with the details, a list, or a menu.
 
 **Left: music, then what you're working on.**
 
