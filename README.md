@@ -124,16 +124,16 @@ ls ~/.gemini/tmp/*/chats/
 
 ### Antigravity
 
-While Antigravity (the IDE or the app) is open, the dock reads your real quota from it, the same numbers as its `/usage` panel. It shows two rings:
+While Antigravity (the IDE or the app) is open, the dock reads your real quota from it, the same numbers as its `/usage` panel. It shows two bars:
 
-- **Gemini**: Gemini Pro and Flash.
-- **Claude and GPT**: the other models.
+- **Gemini**: the Gemini models.
+- **AG Claude**: the Claude and GPT-OSS models in Antigravity.
 
-Each ring shows the share you've used and when it resets. Models in a group share a five-hour and a weekly limit, so the ring shows whichever is closer to running out. There's no budget to set.
+Each bar shows the share you've used, and the card says when it resets. Models in a group share a five-hour and a weekly limit, so the bar shows whichever is closer to running out. There's no budget to set. This is a local status query to Antigravity: it doesn't use any quota.
 
-Until Antigravity has been opened once with Glance Dock running, a dimmed Gemini ring with `–` reminds you to open it. When Antigravity is closed, the rings stay, dimmed, showing the last reading (hover over it to see when that was). Once a reset time has passed, that ring drops to 0%, until Antigravity is opened again and reports fresh numbers. The last reading is saved in `~/.cache/glancedock/antigravity.json`.
+Until Antigravity has been opened once with Glance Dock running, a dimmed Gemini bar reminds you to open it. When Antigravity is closed, the bars stay, dimmed, showing the last reading (the card says when that was). Once a reset time has passed, that bar drops to 0%, until Antigravity is opened again and reports fresh numbers. The last reading is saved in `~/.cache/glancedock/antigravity.json`.
 
-This uses the local service that Antigravity's own quota panel talks to. Google doesn't document it for outside apps, so an Antigravity update could break it. If that happens, only the Antigravity card goes away. Finding the service uses the `ss` command, which comes with almost every Linux system.
+This uses the local service that Antigravity's own quota panel talks to. Google doesn't document it for outside apps, so an Antigravity update could break it. If that happens, only the Antigravity bars go away. Finding the service uses the `ss` command, which comes with almost every Linux system.
 
 ### Adding other services
 
@@ -150,21 +150,21 @@ Put any executable in `~/.config/glancedock/providers/`. It runs on every refres
 }
 ```
 
-A script can also print a list of such objects. If you set `exhaust_at` earlier than `resets_at`, you get the same run-out warning as the built-in Claude source.
+A script can also print a list of such objects. If you set `exhaust_at` earlier than `resets_at`, you get a run-out alert and notification.
 
 These scripts run as your user, so only add ones you trust. Keep any API keys inside the script's own config, not in the dock.
 
-## When the AI card says "AI check failed"
+## When the AI segment says "error"
 
-Hover over the card to see the error. To see the full output, run the helper by hand:
+Click it to see why. To see the full output, run the helper by hand with the system Python (it needs 3.9 or later, so not an older conda `python3`):
 
 ```sh
-python3 ~/.local/share/gnome-shell/extensions/glancedock@local/helpers/ai_usage.py
+/usr/bin/python3 ~/.local/share/gnome-shell/extensions/glancedock@local/helpers/ai_usage.py
 ```
 
 ## Development
 
-To try changes without logging out, run a nested shell:
+On X11, reinstall with `./install.sh` and restart GNOME Shell with Alt+F2, `r`, Enter. Your windows stay open. On Wayland, run a nested shell instead:
 
 - **GNOME 49 and later**:
   ```sh
@@ -182,6 +182,8 @@ journalctl -f -o cat /usr/bin/gnome-shell
 ```
 
 Messages from the extension start with `[Glance Dock]`.
+
+To check the AI usage helper after changing it, run `/usr/bin/python3 helpers/test_ai_usage.py`.
 
 To add a widget, create a class in `widgets/` that extends `Widget` from `lib/widget.js` and sets `this.actor`. Use `every(seconds, fn)` for polling, so the timers are cleaned up for you. Then:
 

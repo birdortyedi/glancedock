@@ -66,11 +66,11 @@ export class TerminalWidget extends Widget {
     _geometry() {
         const monitor = Main.layoutManager.primaryMonitor;
         const scale = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-        const bar = this.ctx.settings.get_int('dock-height') * scale;
         const width = Math.min(WIDTH * scale, monitor.width - 2 * MARGIN * scale);
-        const height = Math.min(HEIGHT * scale, monitor.height - bar - 2 * MARGIN * scale);
+        const barTop = this.ctx.barTop() ?? monitor.y + monitor.height;
+        const height = Math.min(HEIGHT * scale, barTop - monitor.y - 2 * MARGIN * scale);
         return [monitor.x + Math.round((monitor.width - width) / 2),
-            monitor.y + monitor.height - bar - height - MARGIN * scale, width, height];
+            barTop - height - MARGIN * scale, width, height];
     }
 
     _call(method, args = []) {

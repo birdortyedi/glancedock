@@ -16,6 +16,10 @@ const TASK = /^(\s*[-*] \[)([ xX])(\] )(.*)$/;
 const PATH = GLib.build_filenamev([GLib.get_user_config_dir(), 'glancedock', 'todos.md']);
 const SHOWN_DONE = 5;
 
+// The file as it is now. Changes start from this, not from what was last
+// shown, so an edit just saved in another editor isn't overwritten.
+const fresh = () => (readText(PATH) ?? '').split('\n');
+
 // Next open task from ~/.config/glancedock/todos.md (Markdown checkboxes).
 // Click the tile for a popup to tick tasks off and add new ones.
 export class TodosWidget extends Widget {
@@ -38,7 +42,7 @@ export class TodosWidget extends Widget {
         this._menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this._menu.addMenuItem(this._entryItem());
         this._clearItem = this._menu.addAction('Clear completed', () => this._write(
-            this._lines.filter(line => !TASK.test(line) || line.match(TASK)[2] === ' ')));
+            fresh().filter(line => !TASK.test(line) || line.match(TASK)[2] === ' ')));
         this._menu.connect('open-state-changed', (_m, open) => {
             if (open)
                 this._entry.grab_key_focus();
@@ -58,7 +62,8 @@ export class TodosWidget extends Widget {
             if (!text)
                 return;
             this._entry.text = '';
-            this._write([...this._lines.filter((line, i) => line || i < this._lines.length - 1), `- [ ] ${text}`, '']);
+            const lines = fresh();
+            this._write([...lines.filter((line, i) => line || i < lines.length - 1), `- [ ] ${text}`, '']);
         });
         item.add_child(this._entry);
         return item;
@@ -68,7 +73,7 @@ export class TodosWidget extends Widget {
         this._lines = (readText(PATH) ?? '').split('\n');
         const tasks = this._lines.map((line, i) => {
             const m = line.match(TASK);
-            return m ? {i, done: m[2] !== ' ', text: m[4].trim()} : null;
+            return m ? {i, line, done: m[2] !== ' ', text: m[4].trim()} : null;
         }).filter(Boolean);
         const open = tasks.filter(t => !t.done);
         const done = tasks.filter(t => t.done);
@@ -92,7 +97,11 @@ export class TodosWidget extends Widget {
             label.add_style_class_name('glance-todo-done');
         item.add_child(label);
         item.connect('button-release-event', () => {
-            const lines = [...this._lines];
+            const lines = fresh();
+            if (lines[task.i] !== task.line) { // the file changed meanwhile: show it, don't overwrite it
+                this._load();
+                return Clutter.EVENT_STOP;
+            }
             lines[task.i] = lines[task.i].replace(TASK, `$1${task.done ? ' ' : 'x'}$3$4`);
             this._write(lines);
             return Clutter.EVENT_STOP;

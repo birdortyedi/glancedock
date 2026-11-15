@@ -130,7 +130,10 @@ class Dock {
         this._island.connect('notify::hover', () => (this._island.hover ? this._show() : this._queueHide()));
         this._edge = new St.Widget({reactive: true, track_hover: true, visible: false});
         this._edge.connect('notify::hover', () => this._edge.hover && this._show());
-        Main.layoutManager.addChrome(this._edge, {affectsInputRegion: true, trackFullscreen: true});
+        // Not fullscreen-tracked: GNOME forces tracked chrome visible, and a
+        // visible strip would sit over the bar's bottom row and hide it under
+        // the pointer. Shown only while the bar is hidden.
+        Main.layoutManager.addChrome(this._edge, {affectsInputRegion: true});
         this._autoHideId = this._settings.connect('changed::auto-hide', () => {
             Main.layoutManager.untrackChrome(this._island);
             Main.layoutManager.removeChrome(this.actor);
@@ -319,6 +322,7 @@ class Dock {
             settings: this._settings,
             alerts: this.alerts,
             fitApps: () => this._queueFit(),
+            barTop: () => this._barTop, // where the bar starts (it can sit above a dock)
             use12h: this._iface.get_string('clock-format') === '12h',
         };
         for (const [key, section, WidgetClass] of WIDGETS) {

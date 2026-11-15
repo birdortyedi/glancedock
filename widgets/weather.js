@@ -110,7 +110,20 @@ export class WeatherWidget extends Widget {
                 return;
             console.warn('[Glance Dock] weather:', e);
             this._showMessage('Offline', `Weather unavailable: ${e.message}`);
+            this._retrySoon(); // e.g. no network yet right after login
         }
+    }
+
+    // One retry a minute after a failure, instead of waiting for the next
+    // 15-minute refresh.
+    _retrySoon() {
+        if (this._retryId || !this.actor)
+            return;
+        this._retryId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 60, () => {
+            this._retryId = 0;
+            this._refresh();
+            return GLib.SOURCE_REMOVE;
+        });
     }
 
     _showMessage(short, long) {
@@ -123,6 +136,8 @@ export class WeatherWidget extends Widget {
 
     destroy() {
         this._cancellable.cancel();
+        if (this._retryId)
+            GLib.source_remove(this._retryId);
         super.destroy();
     }
 }

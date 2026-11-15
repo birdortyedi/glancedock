@@ -52,9 +52,17 @@ export class AppsWidget extends Widget {
             .map(id => this._appSystem.lookup_app(id)).filter(Boolean);
     }
 
+    // Open apps without their own button: apps that aren't main ones, plus
+    // main apps fit() had to hide for lack of room.
     _otherApps() {
         const main = this._mainApps();
-        return this._appSystem.get_running().filter(app => !main.includes(app));
+        return [...this._appSystem.get_running().filter(app => !main.includes(app)), ...(this._overflow ?? [])];
+    }
+
+    _syncOthers() {
+        const n = this._otherApps().length;
+        setText(this._others.child, `+${n}`);
+        this._others.visible = n > 0;
     }
 
     _rebuild() {
@@ -65,9 +73,8 @@ export class AppsWidget extends Widget {
         // main apps, then +N, then the all-apps button last
         for (const app of this._mainApps())
             this.actor.add_child(this._appButton(app));
-        const others = this._otherApps().length;
-        setText(this._others.child, `+${others}`);
-        this._others.visible = others > 0;
+        this._overflow = [];
+        this._syncOthers();
         this.actor.add_child(this._others);
         this.actor.add_child(this._gridButton());
         this._syncFocus();
@@ -75,7 +82,8 @@ export class AppsWidget extends Widget {
     }
 
     // Keeps the row within `width`: main apps that aren't running drop out from
-    // the end first, then running ones; +N and the all-apps button always stay.
+    // the end first, then running ones, which then show under +N. +N and the
+    // all-apps button always stay (room for +N is always kept).
     fit(width) {
         const spacing = (() => {
             try {
@@ -87,8 +95,7 @@ export class AppsWidget extends Widget {
         const size = c => c.get_preferred_width(-1)[1] + spacing;
         const kids = this.actor.get_children();
         const apps = kids.filter(c => c._app);
-        let used = kids.filter(c => !c._app && (c !== this._others || c.visible))
-            .reduce((sum, c) => sum + size(c), 0);
+        let used = kids.filter(c => !c._app).reduce((sum, c) => sum + size(c), 0);
         const idle = apps.filter(c => c._app.state === Shell.AppState.STOPPED);
         const running = apps.filter(c => c._app.state !== Shell.AppState.STOPPED);
         const shown = new Set();
@@ -102,6 +109,8 @@ export class AppsWidget extends Widget {
             if (c.visible !== shown.has(c))
                 c.visible = shown.has(c);
         }
+        this._overflow = running.filter(c => !shown.has(c)).map(c => c._app);
+        this._syncOthers();
     }
 
     _fillOthers() {

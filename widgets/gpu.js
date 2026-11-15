@@ -59,12 +59,16 @@ export class GpuWidget extends Widget {
             this._render();
             return;
         }
-        const timer = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, SSH_TIMEOUT, () => {
+        m.proc = proc;
+        let timer = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, SSH_TIMEOUT, () => {
+            timer = 0; // it fired, so there's nothing left to remove
             proc.force_exit();
             return GLib.SOURCE_REMOVE;
         });
         proc.communicate_utf8_async(null, this._cancellable, (p, res) => {
-            GLib.source_remove(timer);
+            if (timer)
+                GLib.source_remove(timer);
+            m.proc = null;
             m.busy = false;
             try {
                 const [, stdout] = p.communicate_utf8_finish(res);
@@ -145,6 +149,7 @@ export class GpuWidget extends Widget {
 
     destroy() {
         this._cancellable.cancel();
+        this._machines.forEach(m => m.proc?.force_exit()); // don't leave ssh running
         super.destroy();
     }
 }

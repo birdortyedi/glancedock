@@ -39,7 +39,7 @@ export default class GlanceDockPreferences extends ExtensionPreferences {
         toggle(widgets, 'show-folders', 'Folders', 'Home and your Files bookmarks, one click away');
         toggle(widgets, 'show-pomodoro', 'Pomodoro', 'Click to start or pause, right-click to reset');
         toggle(widgets, 'show-media', 'Now playing');
-        toggle(widgets, 'show-ai', 'AI usage', 'One card each for Claude Code, Gemini CLI and Antigravity');
+        toggle(widgets, 'show-ai', 'AI usage', 'A bar per limit (Claude Code, Antigravity, Gemini CLI); click for details');
         toggle(widgets, 'show-gpu', 'GPUs', 'This computer and your remote machines, from nvidia-smi');
         toggle(widgets, 'show-system', 'CPU, memory and battery');
         toggle(widgets, 'show-network', 'Network speed');

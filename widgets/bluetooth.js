@@ -34,6 +34,8 @@ export class BluetoothWidget extends Widget {
     }
 
     _sync() {
+        if (!this.actor)
+            return; // gone while a slow connect was finishing
         this.actor.visible = this._client.default_adapter !== null;
         const powered = this._client.default_adapter_powered;
         const connected = powered && this._devices().some(d => d.connected);

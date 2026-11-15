@@ -11,6 +11,10 @@ import {addTooltip} from '../lib/tooltip.js';
 import {formatCount, formatDuration, formatWhen, levelFor, setText, vbox} from '../lib/utils.js';
 import {Widget} from '../lib/widget.js';
 
+// Notifications already shown, at module level so a screen lock (which turns
+// the extension off and on) doesn't repeat them.
+const warned = new Set();
+
 // AI limits at a glance, drawn like the GPUs: one thin bar per limit (Claude
 // Code, Gemini and AG Claude in Antigravity, Gemini CLI, your own scripts),
 // filled to how much is used, then the highest percentage. Click for a card
@@ -20,7 +24,6 @@ export class AiWidget extends Widget {
     constructor(ctx) {
         super(ctx);
         this._busy = false;
-        this._warned = new Set();
         this._rows = [];
         this._error = null;
         this._cancellable = new Gio.Cancellable();
@@ -50,8 +53,10 @@ export class AiWidget extends Widget {
         try {
             const proc = Gio.Subprocess.new(argv,
                 Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE);
+            this._proc = proc;
             proc.communicate_utf8_async(null, this._cancellable, (p, res) => {
                 this._busy = false;
+                this._proc = null;
                 let stdout, stderr;
                 try {
                     [, stdout, stderr] = p.communicate_utf8_finish(res);
@@ -134,9 +139,10 @@ export class AiWidget extends Widget {
                 ? `${what} is used up${resets ? ` until ${formatWhen(resets, use12h)}` : ''}`
                 : `${what} runs out ~${formatWhen(exhaust, use12h)}` +
                   `${resets ? `, resets ${formatWhen(resets, use12h)}` : ''}`;
-            const key = `ai:${provider.id}:${w.name}`;
+            // The reset time makes each period's alert (and notification) new.
+            const key = `ai:${provider.id}:${w.name}:${w.resets_at}`;
             alerts.set(key, {text, level: 'crit'});
-            this._notifyOnce(`${key}:${w.resets_at}`, what, text);
+            this._notifyOnce(key, what, text);
         }
         return {what, value, notes, fraction, limit: Boolean(w.limit),
             level: runsOut ? 'crit' : levelFor(fraction), stale: Boolean(provider.as_of || provider.placeholder)};
@@ -171,9 +177,9 @@ export class AiWidget extends Widget {
     }
 
     _notifyOnce(key, title, body) {
-        if (this._warned.has(key) || !this.ctx.settings.get_boolean('ai-warnings'))
+        if (warned.has(key) || !this.ctx.settings.get_boolean('ai-warnings'))
             return;
-        this._warned.add(key);
+        warned.add(key);
         Main.notify(title, body);
     }
 
@@ -190,6 +196,7 @@ export class AiWidget extends Widget {
 
     destroy() {
         this._cancellable.cancel();
+        this._proc?.force_exit(); // don't leave a helper running after a rebuild
         this.ctx.alerts.replace('ai:', new Map());
         super.destroy();
     }

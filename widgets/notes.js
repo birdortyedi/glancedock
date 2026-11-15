@@ -66,10 +66,17 @@ export class NotesWidget extends Widget {
             const note = this._entry.text.trim();
             if (!note)
                 return;
-            this._entry.text = '';
             const stamp = GLib.DateTime.new_now_local().format('%Y-%m-%d %H:%M');
             const old = readText(this._path) ?? '# Inbox\n';
-            GLib.file_set_contents(this._path, `${old.replace(/\n*$/, '\n')}- ${stamp}  ${note}\n`);
+            try {
+                GLib.mkdir_with_parents(this._folder, 0o755);
+                GLib.file_set_contents(this._path, `${old.replace(/\n*$/, '\n')}- ${stamp}  ${note}\n`);
+            } catch (e) {
+                // Keep the text in the box, so nothing you typed is lost.
+                Main.notify('Couldn’t save the note', `${this._path}: ${e.message}`);
+                return;
+            }
+            this._entry.text = ''; // only once it's safely saved
             this._load();
         });
         item.add_child(this._entry);

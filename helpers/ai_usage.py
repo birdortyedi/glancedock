@@ -139,12 +139,13 @@ def claude_limit(dirs, now):
                         if '"quotaLimits"' not in line:
                             continue
                         try:
-                            quota = json.loads(line).get("quotaLimits") or {}
-                        except ValueError:
-                            continue
-                        if quota.get("status") != "rejected" or not quota.get("resetsAt"):
-                            continue
-                        resets = datetime.fromtimestamp(quota["resetsAt"], timezone.utc)
+                            entry = json.loads(line)
+                            quota = entry.get("quotaLimits") if isinstance(entry, dict) else None
+                            if not isinstance(quota, dict) or quota.get("status") != "rejected":
+                                continue
+                            resets = datetime.fromtimestamp(float(quota["resetsAt"]), timezone.utc)
+                        except (ValueError, TypeError, KeyError, OverflowError, OSError):
+                            continue  # an odd line shouldn't drop the whole Claude reading
                         if resets > now and (latest is None or resets > latest[0]):
                             latest = (resets, quota.get("rateLimitType") or "")
             except OSError:
@@ -313,7 +314,7 @@ def antigravity_provider(args, now):
         for port in ports:
             try:
                 data = antigravity_status(port, token)
-            except (OSError, ValueError):
+            except Exception:  # a port that isn't the quota service (any error) is skipped
                 continue
             if isinstance(data, dict) and isinstance(data.get("userStatus"), dict):
                 status = data["userStatus"]
@@ -323,8 +324,24 @@ def antigravity_provider(args, now):
     if status is None:
         raise RuntimeError("Antigravity is running but didn't answer the quota request")
 
-    # Models in a group share a five-hour and a weekly limit, so show the
-    # tightest remaining quota in each group with its reset time.
+    windows = antigravity_windows(status)
+    if not windows:
+        return None
+    provider = {"id": "antigravity", "label": "Antigravity", "windows": windows}
+    try:
+        AG_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        AG_CACHE.write_text(json.dumps({**provider, "as_of": iso(now)}))
+    except OSError:
+        pass  # the cache is a nicety
+    return provider
+
+
+def antigravity_windows(status):
+    """One window per model group from Antigravity's GetUserStatus answer.
+
+    Models in a group share a five-hour and a weekly limit, so each group shows
+    its tightest remaining quota with that reset time.
+    """
     groups = {}
     configs = (status.get("cascadeModelConfigData") or {}).get("clientModelConfigs") or []
     for config in configs:
@@ -336,20 +353,11 @@ def antigravity_provider(args, now):
         remaining = float(quota.get("remainingFraction", 0))  # omitted when it's 0
         if group not in groups or remaining < groups[group][0]:
             groups[group] = (remaining, parse_time(quota.get("resetTime")))
-    windows = [
+    return [
         {**make_window(group, round((1 - remaining) * 100, 1), 100, resets_at=reset, unit="%"),
          "detail": AG_GROUPS[group]}
         for group, (remaining, reset) in sorted(groups.items(), key=lambda g: g[0] != "Gemini")
     ]
-    if not windows:
-        return None
-    provider = {"id": "antigravity", "label": "Antigravity", "windows": windows}
-    try:
-        AG_CACHE.parent.mkdir(parents=True, exist_ok=True)
-        AG_CACHE.write_text(json.dumps({**provider, "as_of": iso(now)}))
-    except OSError:
-        pass  # the cache is a nicety
-    return provider
 
 
 def custom_providers(errors):

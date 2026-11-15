@@ -1,6 +1,5 @@
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
-import Goa from 'gi://Goa';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import {iconButton} from '../lib/popup.js';
@@ -19,7 +18,11 @@ export class DriveWidget extends Widget {
         addTooltip(this.actor, () => this._summary());
         this._monitor = Gio.VolumeMonitor.get();
         this._mountIds = ['mount-added', 'mount-removed'].map(s => this._monitor.connect(s, () => this._sync()));
-        Goa.Client.new(null, (_o, res) => {
+        // Loaded on demand: GNOME Shell doesn't depend on Online Accounts, and a
+        // missing library should only switch this button off, not the whole bar.
+        import('gi://Goa').then(({default: Goa}) => Goa.Client.new(null, (_o, res) => {
+            if (!this.actor)
+                return; // gone meanwhile
             try {
                 this._goa = Goa.Client.new_finish(res);
                 this._goaIds = ['account-added', 'account-removed', 'account-changed']
@@ -28,7 +31,7 @@ export class DriveWidget extends Widget {
             } catch (e) {
                 console.warn('[Glance Dock] Google Drive: Online Accounts unavailable:', e.message);
             }
-        });
+        })).catch(e => console.warn('[Glance Dock] Google Drive: Online Accounts unavailable:', e.message));
         this._sync();
     }
 

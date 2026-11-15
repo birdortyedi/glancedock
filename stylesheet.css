@@ -15,7 +15,6 @@
     color: #e8e6f0;
 }
 
-.glance-group { spacing: 0; }
 .glance-item { spacing: 8px; }
 
 /* Segments separated by hairlines, not boxes */
@@ -38,20 +37,8 @@
 .glance-time { font-family: IBM Plex Mono; font-size: 13pt; font-weight: 500; }
 .glance-accent { color: #b9a7ff; }
 .glance-clip { max-width: 130px; }
-.glance-clip-short { max-width: 110px; }
-.glance-item-icon { icon-size: 16px; color: rgba(232, 230, 240, 0.7); }
-.glance-todo-done { color: rgba(232, 230, 240, 0.4); text-decoration: line-through; }
 
-/* Rings (only where there's a limit: AI quotas, focus, todos) */
-.glance-stat { spacing: 1px; }
-.glance-ring { width: 28px; height: 28px; }
-.glance-ring-value {
-    /* Digits sit high in their line box; this centres them in the ring. */
-    padding-top: 2px;
-    font-family: IBM Plex Mono;
-    font-size: 7.5pt;
-    font-weight: 500;
-}
+.glance-todo-done { color: rgba(232, 230, 240, 0.4); text-decoration: line-through; }
 .glance-stat-caption { font-size: 7.5pt; color: rgba(232, 230, 240, 0.5); }
 .glance-system { spacing: 12px; }
 
@@ -86,13 +73,9 @@
 .glance-gpu-fill.glance-crit { background-color: #ff8a8a; }
 .glance-gpu-gap { width: 6px; }
 .glance-card-title { font-weight: 500; }
-
-.glance-warn .glance-ring-value,
 .glance-warn .glance-value { color: #f5c37a; }
-.glance-crit .glance-ring-value,
 .glance-crit .glance-value,
 .glance-crit.glance-num { color: #ff8a8a; }
-
 
 /* Weather, media, buttons */
 .glance-weather-icon { icon-size: 20px; color: rgba(232, 230, 240, 0.8); }

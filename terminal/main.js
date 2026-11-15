@@ -278,8 +278,8 @@ const methods = {
     Show: show,
     Hide: hide,
     NewTab(argv, x, y, w, h, time) {
+        newTab(argv); // first, so show() doesn't also open a default tab
         show(x, y, w, h, time);
-        newTab(argv);
     },
     Focus(index, x, y, w, h, time) {
         book.set_current_page(index);
