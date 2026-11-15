@@ -29,7 +29,7 @@ import {TodosWidget} from './widgets/todos.js';
 import {TogglesWidget} from './widgets/toggles.js';
 import {WeatherWidget} from './widgets/weather.js';
 
-// [settings key, part of the bar, class, shared tile]; each has a show-<key>
+// [settings key, side of the bar, class, shared tile]; each has a show-<key>
 // setting. Side widgets sit in tiles; ones naming the same tile share it.
 const WIDGETS = [
     // Left: what you're doing
@@ -40,8 +40,8 @@ const WIDGETS = [
     ['terminal', 'left', TerminalWidget, 'work'],
     ['folders', 'left', FoldersWidget, 'work'],
     ['drive', 'left', DriveWidget, 'work'],
-    // Centre: apps
-    ['apps', 'center', AppsWidget],
+    // Then your main apps, as the last section on the left
+    ['apps', 'left', AppsWidget],
     // Right, from the machine out to the world: compute, AI limits,
     // connections, controls, time, and power in the corner
     ['gpu', 'right', GpuWidget, 'compute'],
@@ -96,9 +96,8 @@ class Dock {
         // reserves the space, so maximized windows stop above the bar. Only
         // the bar itself takes clicks, so a dock below it (if any) stays usable.
         this.actor = new St.Widget({name: 'glanceDock', layout_manager: new Clutter.BinLayout()});
-        // left group | apps (all the space in between) | right group. The apps
-        // can't overlap the sides; _queueFit() then slides them toward the
-        // screen's centre as far as the free space allows.
+        // left group (ending with the apps) | spare room | right group.
+        // _queueFit() keeps the apps within their own width plus the spare room.
         this._island = new St.BoxLayout({
             style_class: 'glance-island',
             reactive: true,
@@ -152,9 +151,8 @@ class Dock {
         this._queueHide(2000); // show the bar briefly at login, then get out of the way
     }
 
-    // The apps show what fits in the space between the two sides, then slide
-    // toward the screen's centre as far as that space allows. Sliding is a
-    // translation, so it never feeds back into layout. Runs before the next frame.
+    // The apps show what fits in the space between the two sides. Runs
+    // after layout, before the next frame.
     _queueFit() {
         if (this._fitId)
             return;
@@ -163,11 +161,8 @@ class Dock {
             const apps = this._apps?.actor;
             if (!apps)
                 return false;
-            const space = this._center.width;
-            this._apps.fit?.(space);
-            const slack = Math.max(0, (space - apps.width) / 2);
-            const toCentre = (this._right.width - this._left.width) / 2;
-            apps.translation_x = Math.round(Math.max(-slack, Math.min(slack, toCentre)));
+            // The apps may use their own width plus all the spare room.
+            this._apps.fit?.(apps.width + this._center.width);
             return false;
         });
     }
@@ -311,12 +306,8 @@ class Dock {
                 continue;
             try {
                 const widget = new WidgetClass(ctx);
-                const parent = {left: this._left, center: this._center, right: this._right}[side];
-                if (side === 'center') {
-                    widget.actor.x_align = Clutter.ActorAlign.CENTER;
-                    parent.set_child(widget.actor);
-                    widget.actor.connect('notify::width', () => this._queueFit());
-                } else if (tile) {
+                const parent = side === 'left' ? this._left : this._right;
+                if (tile) {
                     if (!this._tiles.has(tile)) {
                         const box = new St.BoxLayout({style_class: 'glance-tile', y_align: Clutter.ActorAlign.CENTER});
                         this._tiles.set(tile, box);
@@ -333,6 +324,7 @@ class Dock {
             }
         }
         this._apps = this._widgets.find(w => w instanceof AppsWidget) ?? null;
+        this._apps?.actor.connect('notify::width', () => this._queueFit());
         this._geometry = '';
         this._reposition();
         this._queueFit();

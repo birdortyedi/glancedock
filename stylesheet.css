@@ -21,8 +21,8 @@
 /* Segments separated by hairlines, not boxes */
 .glance-tile {
     border-left: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 0 12px;
-    spacing: 12px;
+    padding: 0 10px;
+    spacing: 10px;
 }
 .glance-tile:first-child { border-left-width: 0; padding-left: 4px; }
 .glance-tile:last-child { padding-right: 4px; }
@@ -146,12 +146,14 @@
 
 .glance-net { min-width: 62px; spacing: 0; }
 .glance-tile.glance-clock { spacing: 0; }
+/* The clock never gives up space: the time and date always fit in full. */
+.glance-clock { min-width: 70px; }
 .glance-audio { spacing: 4px; }
 .glance-note { max-width: 320px; }
 .glance-slider-value { min-width: 44px; text-align: right; }
 
 /* Main apps: monochrome icons, lit on hover and when focused */
-.glance-main-app { padding: 4px 6px; }
+.glance-main-app { padding: 5px 5px 3px 5px; }
 .glance-others { padding: 4px 8px; }
 .glance-others StLabel { font-size: 9pt; color: rgba(232, 230, 240, 0.6); }
 .glance-others:hover StLabel { color: #e8e6f0; }
@@ -162,6 +164,6 @@
 .glance-drive-meter .glance-bar-track { height: 4px; }
 
 /* Now playing: a fixed width so the bar never shifts; quiet when idle */
-.glance-media { width: 250px; }
+.glance-media { width: 230px; }
 .glance-media.glance-idle .glance-value { color: rgba(232, 230, 240, 0.45); }
 .glance-media.glance-idle .glance-art { color: rgba(232, 230, 240, 0.35); }

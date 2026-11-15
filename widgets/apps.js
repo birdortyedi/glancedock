@@ -11,7 +11,7 @@ import {addTooltip} from '../lib/tooltip.js';
 import {setText, vbox} from '../lib/utils.js';
 import {Widget} from '../lib/widget.js';
 
-const ICON_SIZE = 26;
+const ICON_SIZE = 18; // the same visual size as the bar's 16 px symbolic icons
 
 // Your main apps (Preferences → main-apps) as monochrome icons that light up
 // on hover and when focused, with a dot while running. Every other open app
@@ -22,6 +22,10 @@ export class AppsWidget extends Widget {
     constructor(ctx) {
         super(ctx);
         this.actor = new St.BoxLayout({style_class: 'glance-apps', y_align: Clutter.ActorAlign.CENTER});
+        // If the bar runs out of room, the apps give way, never the clock or
+        // other text: no minimum width, and clipped at the edge.
+        this.actor.min_width = 0;
+        this.actor.clip_to_allocation = true;
         this._appSystem = Shell.AppSystem.get_default();
         this._tracker = Shell.WindowTracker.get_default();
         this._menuManager = new PopupMenu.PopupMenuManager(this.actor);
@@ -58,15 +62,46 @@ export class AppsWidget extends Widget {
             this.actor.remove_child(this._others); // kept across rebuilds
         this.actor.destroy_all_children();
         this._buttons.clear();
-        this.actor.add_child(this._gridButton());
+        // main apps, then +N, then the all-apps button last
         for (const app of this._mainApps())
             this.actor.add_child(this._appButton(app));
         const others = this._otherApps().length;
         setText(this._others.child, `+${others}`);
         this._others.visible = others > 0;
         this.actor.add_child(this._others);
+        this.actor.add_child(this._gridButton());
         this._syncFocus();
         this.ctx.fitApps?.();
+    }
+
+    // Keeps the row within `width`: main apps that aren't running drop out from
+    // the end first, then running ones; +N and the all-apps button always stay.
+    fit(width) {
+        const spacing = (() => {
+            try {
+                return this.actor.get_theme_node().get_length('spacing');
+            } catch {
+                return 0; // not styled yet
+            }
+        })();
+        const size = c => c.get_preferred_width(-1)[1] + spacing;
+        const kids = this.actor.get_children();
+        const apps = kids.filter(c => c._app);
+        let used = kids.filter(c => !c._app && (c !== this._others || c.visible))
+            .reduce((sum, c) => sum + size(c), 0);
+        const idle = apps.filter(c => c._app.state === Shell.AppState.STOPPED);
+        const running = apps.filter(c => c._app.state !== Shell.AppState.STOPPED);
+        const shown = new Set();
+        for (const c of [...running, ...idle]) { // running apps get first claim on space
+            if (used + size(c) <= width) {
+                shown.add(c);
+                used += size(c);
+            }
+        }
+        for (const c of apps) {
+            if (c.visible !== shown.has(c))
+                c.visible = shown.has(c);
+        }
     }
 
     _fillOthers() {
@@ -83,7 +118,7 @@ export class AppsWidget extends Widget {
         // No keyboard focus: the overview must get Esc and typing, not this button.
         const grid = new St.Button({
             style_class: 'glance-app',
-            child: new St.Icon({icon_name: 'view-app-grid-symbolic', icon_size: 20}),
+            child: new St.Icon({icon_name: 'view-app-grid-symbolic', icon_size: 16}),
             can_focus: false,
         });
         grid.connect('clicked', () => {
