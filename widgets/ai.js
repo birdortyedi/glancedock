@@ -3,21 +3,37 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 import {BarStat} from '../lib/bar.js';
+import {addPopup, clearMenu} from '../lib/popup.js';
 import {addTooltip} from '../lib/tooltip.js';
-import {formatCount, formatDuration, formatWhen, levelFor} from '../lib/utils.js';
+import {formatCount, formatDuration, formatWhen, levelFor, setText, vbox} from '../lib/utils.js';
 import {Widget} from '../lib/widget.js';
 
-// One ring per usage window of each AI service (Claude Code, Gemini CLI,
-// Antigravity, your own scripts), all in one tile. Data comes from helpers/ai_usage.py.
+// AI limits at a glance, drawn like the GPUs: one thin bar per limit (Claude
+// Code, Gemini and AG Claude in Antigravity, Gemini CLI, your own scripts),
+// filled to how much is used, then the highest percentage. Click for a card
+// with each limit's usage, reset time and details. Data comes from
+// helpers/ai_usage.py.
 export class AiWidget extends Widget {
     constructor(ctx) {
         super(ctx);
         this._busy = false;
         this._warned = new Set();
+        this._rows = [];
+        this._error = null;
         this._cancellable = new Gio.Cancellable();
-        this.actor = new St.BoxLayout({style_class: 'glance-item glance-ai', visible: false});
+
+        const box = new St.BoxLayout({style_class: 'glance-item'});
+        box.add_child(new St.Label({text: 'ai', style_class: 'glance-stat-caption', y_align: Clutter.ActorAlign.CENTER}));
+        this._strip = new St.BoxLayout({style_class: 'glance-gpu-strip', y_align: Clutter.ActorAlign.CENTER});
+        box.add_child(this._strip);
+        this._summary = new St.Label({style_class: 'glance-num glance-accent', y_align: Clutter.ActorAlign.CENTER});
+        box.add_child(this._summary);
+        this.actor = new St.Button({style_class: 'glance-button', child: box, can_focus: true, visible: false});
+        this._menu = addPopup(this.actor, () => this._fillMenu());
+        addTooltip(this.actor, () => (this._menu.isOpen ? null : this._tooltip()));
         this.every(ctx.settings.get_int('ai-refresh-seconds'), () => this._refresh());
     }
 
@@ -63,57 +79,55 @@ export class AiWidget extends Widget {
     _render(data) {
         if (!this.actor)
             return;
-        this.actor.destroy_all_children();
+        this._error = null;
         const alerts = new Map();
-        for (const provider of data.providers ?? []) {
-            for (const window of provider.windows ?? []) {
-                const stat = this._stat(provider, window, alerts);
-                if (provider.as_of || provider.placeholder)
-                    stat.opacity = 140; // an old reading, or none yet (Antigravity is closed)
-                this.actor.add_child(stat);
-            }
-        }
+        this._rows = (data.providers ?? []).flatMap(provider =>
+            (provider.windows ?? []).map(w => this._row(provider, w, alerts)));
         this.ctx.alerts.replace('ai:', alerts);
         if (data.errors?.length)
             console.warn('[Glance Dock] AI usage:', data.errors.join('; '));
-        this.actor.visible = this.actor.get_n_children() > 0;
+
+        this._strip.destroy_all_children();
+        for (const row of this._rows)
+            this._strip.add_child(limitBar(row));
+        const limited = this._rows.filter(r => r.limit);
+        const top = limited.filter(r => !r.stale).sort((a, b) => b.fraction - a.fraction)[0];
+        const crit = this._rows.some(r => r.level === 'crit');
+        setText(this._summary, crit ? 'limit' : top ? `${Math.round(top.fraction * 100)}%` : 'ok');
+        this._summary[crit ? 'add_style_class_name' : 'remove_style_class_name']('glance-crit');
+        this.actor.visible = this._rows.length > 0;
     }
 
-    _stat(provider, w, alerts) {
+    // One limit, worked out once for the bar, the tooltip, the card and alerts.
+    _row(provider, w, alerts) {
         const use12h = this.ctx.use12h;
-        const stat = new BarStat(w.name.toLowerCase());
         const now = new Date();
         const resets = w.resets_at ? new Date(w.resets_at) : null;
         const exhaust = w.exhaust_at ? new Date(w.exhaust_at) : null;
-        const fraction = w.limit ? w.used / w.limit : 0;
+        const fraction = w.limit ? Math.min(1, w.used / w.limit) : 0;
         const runsOut = Boolean(w.limit) && exhaust !== null && (resets === null || exhaust < resets);
-
-        const level = runsOut ? 'crit' : levelFor(fraction);
-        if (w.label)
-            stat.set(fraction, w.label, level);
-        else if (w.limit)
-            stat.set(fraction, `${Math.min(999, Math.round(fraction * 100))}%`, level);
-        else
-            stat.set(0, formatCount(w.used));
-
-        // A ring with its own description is named by its caption alone.
+        // A limit with its own description is named by itself alone.
         const what = w.detail || w.name === provider.label ? w.name : `${provider.label} ${w.name}`;
-        const lines = [what];
-        if (w.detail)
-            lines.push(w.detail);
-        if (w.unit === '%' && w.limit)
-            lines.push(`${Math.round(w.used)}% used`);
+
+        let value = formatCount(w.used);
+        if (w.label)
+            value = w.label;
         else if (w.limit)
-            lines.push(`${formatCount(w.used)} of ${formatCount(w.limit)} ${w.unit} (${Math.round(fraction * 100)}%)`);
-        else if (!w.detail)
-            lines.push(`${formatCount(w.used)} ${w.unit}. Set a budget in preferences to track a limit.`);
+            value = `${Math.min(999, Math.round(w.used / w.limit * 100))}%`;
+
+        const notes = [];
+        if (w.detail)
+            notes.push(w.detail);
+        else if (w.limit && w.unit !== '%')
+            notes.push(`${formatCount(w.used)} of ${formatCount(w.limit)} ${w.unit}`);
+        else if (!w.limit)
+            notes.push(`${formatCount(w.used)} ${w.unit}. Set a budget in preferences to track a limit.`);
         if (resets)
-            lines.push(`Resets ${formatWhen(resets, use12h)}, in ${formatDuration(resets - now)}`);
+            notes.push(`Resets ${formatWhen(resets, use12h)}, in ${formatDuration(resets - now)}`);
         if (runsOut && fraction < 1)
-            lines.push(`At this pace it runs out around ${formatWhen(exhaust, use12h)}`);
+            notes.push(`At this pace it runs out around ${formatWhen(exhaust, use12h)}`);
         if (provider.as_of)
-            lines.push(`Last read ${formatWhen(new Date(provider.as_of), use12h)}; open ${provider.label} to refresh`);
-        addTooltip(stat.actor, () => lines.join('\n'));
+            notes.push(`Last read ${formatWhen(new Date(provider.as_of), use12h)}; open ${provider.label} to refresh`);
 
         if (runsOut) {
             const text = fraction >= 1
@@ -124,7 +138,36 @@ export class AiWidget extends Widget {
             alerts.set(key, {text, level: 'crit'});
             this._notifyOnce(`${key}:${w.resets_at}`, what, text);
         }
-        return stat.actor;
+        return {what, value, notes, fraction, limit: Boolean(w.limit),
+            level: runsOut ? 'crit' : levelFor(fraction), stale: Boolean(provider.as_of || provider.placeholder)};
+    }
+
+    _tooltip() {
+        if (this._error)
+            return `AI usage check failed:\n${this._error}`;
+        return `${this._rows.map(r => `${r.what}: ${r.value}`).join('\n')}\nClick for details`;
+    }
+
+    _fillMenu() {
+        clearMenu(this._menu);
+        if (this._error) {
+            this._menu.addMenuItem(new PopupMenu.PopupMenuItem(`AI usage check failed: ${this._error}`, {reactive: false}));
+            return;
+        }
+        for (const r of this._rows) {
+            const item = new PopupMenu.PopupBaseMenuItem({reactive: false});
+            const box = vbox({style_class: 'glance-card-row', x_expand: true});
+            const meter = new BarStat(r.what);
+            meter.set(r.fraction, r.value, r.level);
+            meter.actor.add_style_class_name('glance-card-meter');
+            box.add_child(meter.actor);
+            for (const note of r.notes)
+                box.add_child(new St.Label({text: note, style_class: 'glance-caption'}));
+            if (r.stale)
+                box.opacity = 150;
+            item.add_child(box);
+            this._menu.addMenuItem(item);
+        }
     }
 
     _notifyOnce(key, title, body) {
@@ -138,20 +181,10 @@ export class AiWidget extends Widget {
         console.error('[Glance Dock] AI usage:', message);
         if (!this.actor)
             return;
-        this.actor.destroy_all_children();
-        const card = new St.BoxLayout({style_class: 'glance-item glance-crit'});
-        card.add_child(new St.Icon({
-            icon_name: 'dialog-warning-symbolic',
-            style_class: 'glance-item-icon',
-            y_align: Clutter.ActorAlign.CENTER,
-        }));
-        card.add_child(new St.Label({
-            text: 'AI check failed',
-            style_class: 'glance-value',
-            y_align: Clutter.ActorAlign.CENTER,
-        }));
-        addTooltip(card, () => `AI usage check failed:\n${message}`);
-        this.actor.add_child(card);
+        this._error = message;
+        this._strip.destroy_all_children();
+        setText(this._summary, 'error');
+        this._summary.add_style_class_name('glance-crit');
         this.actor.visible = true;
     }
 
@@ -160,6 +193,23 @@ export class AiWidget extends Widget {
         this.ctx.alerts.replace('ai:', new Map());
         super.destroy();
     }
+}
+
+// A thin vertical bar filled to how much of a limit is used: purple when fine,
+// amber from 70%, red when it's used up or on pace to run out; dimmed when
+// it's a remembered reading.
+function limitBar(row) {
+    const track = new St.Widget({style_class: 'glance-gpu-bar', layout_manager: new Clutter.BinLayout()});
+    const fill = new St.Widget({style_class: 'glance-ai-fill', y_align: Clutter.ActorAlign.END, x_expand: true});
+    if (row.level !== 'ok')
+        fill.add_style_class_name(`glance-${row.level}`);
+    track.add_child(fill);
+    track.opacity = row.stale ? 120 : 255;
+    track.connect('notify::height', () => {
+        if (track.get_stage())
+            fill.height = Math.max(2, Math.round(track.height * row.fraction));
+    });
+    return track;
 }
 
 function lastLine(text) {

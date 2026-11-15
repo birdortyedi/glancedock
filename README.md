@@ -14,10 +14,10 @@ A GNOME Shell extension that replaces the Ubuntu Dock with one floating bar: you
 
 **Middle: your main apps.** Claude, Antigravity IDE, Antigravity, Brave Origin and Spotify as monochrome icons that light up when you hover over them or when the app is focused. A dot marks running apps. Every other open app sits behind a `+N` button; click it to switch to one. Click an app to open or focus it, or to minimize it when it's already focused. Middle-click opens a new window, and right-click opens GNOME's app menu. The grid button shows all apps. Choose the main apps under **Main apps** in Preferences.
 
-**Right side, from the machine out to the world:**
+**Right side:**
 
+- **AI limits**: drawn like the GPUs, with a thin bar per limit and the highest percentage: Claude (a rate-limit watch for Claude Code), Gemini and AG Claude (Claude and GPT-OSS models in Antigravity), and any you add yourself. Click for each limit's usage, reset time and details.
 - **Compute**: your GPUs (this computer and remote machines), CPU, memory and battery meters, and the fullest drive. Click the disk meter for every drive (click one to see what fills it in Disk Usage Analyzer) and GNOME's disk tools: Disk Usage Analyzer, Disks for partitions, and System Monitor's file systems.
-- **AI limits**: a ring per limit: Claude (a rate-limit watch for Claude Code), Gemini and AG Claude (Claude and GPT-OSS models in Antigravity), and any you add yourself.
 - **Connections**:
   - **Network**: download and upload speed.
   - **Tailscale**: whether you're connected, plus your devices; click one to copy its IP.

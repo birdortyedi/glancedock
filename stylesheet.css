@@ -95,8 +95,6 @@
 .glance-crit .glance-value,
 .glance-crit.glance-num { color: #ff8a8a; }
 
-/* AI rings */
-.glance-ai { spacing: 10px; }
 
 /* Weather, media, buttons */
 .glance-weather-icon { icon-size: 20px; color: rgba(232, 230, 240, 0.8); }
@@ -167,3 +165,11 @@
 .glance-media { width: 230px; }
 .glance-media.glance-idle .glance-value { color: rgba(232, 230, 240, 0.45); }
 .glance-media.glance-idle .glance-art { color: rgba(232, 230, 240, 0.35); }
+
+/* AI limits: bars like the GPUs, and a card with the details */
+.glance-ai-fill { border-radius: 2px; background-color: #b9a7ff; }
+.glance-ai-fill.glance-warn { background-color: #f5c37a; }
+.glance-ai-fill.glance-crit { background-color: #ff8a8a; }
+.glance-card-row { spacing: 2px; min-width: 300px; }
+.glance-card-meter { min-width: 300px; }
+.glance-card-meter .glance-bar-track { height: 4px; }

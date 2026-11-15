@@ -42,12 +42,12 @@ const WIDGETS = [
     ['drive', 'left', DriveWidget, 'work'],
     // Then your main apps, as the last section on the left
     ['apps', 'left', AppsWidget],
-    // Right, from the machine out to the world: compute, AI limits,
-    // connections, controls, time, and power in the corner
+    // Right: AI limits, compute, connections, controls, time, and power
+    // in the corner
+    ['ai', 'right', AiWidget],
     ['gpu', 'right', GpuWidget, 'compute'],
     ['system', 'right', SystemWidget, 'compute'],
     ['storage', 'right', StorageWidget, 'compute'],
-    ['ai', 'right', AiWidget],
     ['network', 'right', NetworkWidget, 'connections'],
     ['tailscale', 'right', TailscaleWidget, 'connections'],
     ['bluetooth', 'right', BluetoothWidget, 'connections'],
