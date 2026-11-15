@@ -160,3 +160,8 @@
 .glance-drive { spacing: 4px; min-width: 300px; }
 .glance-drive-meter { min-width: 300px; }
 .glance-drive-meter .glance-bar-track { height: 4px; }
+
+/* Now playing: a fixed width so the bar never shifts; quiet when idle */
+.glance-media { width: 250px; }
+.glance-media.glance-idle .glance-value { color: rgba(232, 230, 240, 0.45); }
+.glance-media.glance-idle .glance-art { color: rgba(232, 230, 240, 0.35); }

@@ -1,6 +1,7 @@
 import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
+import Shell from 'gi://Shell';
 import St from 'gi://St';
 
 import {addTooltip} from '../lib/tooltip.js';
@@ -12,7 +13,9 @@ const PATH = '/org/mpris/MediaPlayer2';
 const IFACE = 'org.mpris.MediaPlayer2.Player';
 
 // Now playing from any MPRIS player (Spotify, browsers, Rhythmbox, mpv...).
-// Hidden when nothing is playing or paused.
+// Always there at a fixed width, so the bar never shifts: with nothing
+// playing it says so, and a click opens Spotify. Click the track to bring its
+// player to the front.
 export class MediaWidget extends Widget {
     constructor(ctx) {
         super(ctx);
@@ -21,7 +24,7 @@ export class MediaWidget extends Widget {
         this._artUrl = null;
         this._cancellable = new Gio.Cancellable();
 
-        this.actor = new St.BoxLayout({style_class: 'glance-item glance-media', visible: false});
+        this.actor = new St.BoxLayout({style_class: 'glance-item glance-media'});
         this._art = new St.Icon({
             style_class: 'glance-art',
             icon_name: 'audio-x-generic-symbolic',
@@ -35,13 +38,18 @@ export class MediaWidget extends Widget {
 
         this._playIcon = new St.Icon({icon_name: 'media-playback-start-symbolic'});
         const controls = new St.BoxLayout({style_class: 'glance-controls', y_align: Clutter.ActorAlign.CENTER});
+        this._controls = controls;
         controls.add_child(this._button(this._playIcon, 'PlayPause'));
         controls.add_child(this._button(new St.Icon({icon_name: 'media-skip-forward-symbolic'}), 'Next'));
 
+        const track = new St.Button({style_class: 'glance-button', child: text, can_focus: true, x_expand: true});
+        track.connect('clicked', () => this._raise());
         this.actor.add_child(this._art);
-        this.actor.add_child(text);
+        this.actor.add_child(track);
         this.actor.add_child(controls);
-        addTooltip(text, () => [this._title.text, this._artist.text].filter(Boolean).join('\n'));
+        addTooltip(track, () => (this._active
+            ? `${[this._title.text, this._artist.text].filter(Boolean).join('\n')}\nClick to show the player`
+            : 'Click to open Spotify'));
 
         this._signalId = Gio.DBus.session.signal_subscribe(
             'org.freedesktop.DBus', 'org.freedesktop.DBus', 'NameOwnerChanged',
@@ -50,6 +58,7 @@ export class MediaWidget extends Widget {
                 if (params.deepUnpack()[0].startsWith(PREFIX))
                     this._syncPlayers();
             });
+        this._update(); // start idle until players are found
         this._syncPlayers();
     }
 
@@ -114,8 +123,15 @@ export class MediaWidget extends Widget {
         const proxies = [...this._players.values()].filter(Boolean).map(p => p.proxy);
         this._active = proxies.find(p => status(p) === 'Playing') ??
             proxies.find(p => status(p) === 'Paused') ?? null;
+        // Idle: same width, quiet text, controls faded (not removed) so nothing moves.
+        this.actor[this._active ? 'remove_style_class_name' : 'add_style_class_name']('glance-idle');
+        this._controls.opacity = this._active ? 255 : 0;
+        this._controls.reactive = Boolean(this._active);
         if (!this._active) {
-            this.actor.visible = false;
+            setText(this._title, 'Nothing playing');
+            setText(this._artist, 'Click to open Spotify');
+            this._artUrl = null;
+            this._art.icon_name = 'audio-x-generic-symbolic';
             return;
         }
 
@@ -134,7 +150,16 @@ export class MediaWidget extends Widget {
             else
                 this._art.icon_name = 'audio-x-generic-symbolic';
         }
-        this.actor.visible = true;
+    }
+
+    // Brings the playing app's window forward, or opens Spotify when idle.
+    _raise() {
+        if (!this._active) {
+            Shell.AppSystem.get_default().lookup_app('spotify_spotify.desktop')?.activate();
+            return;
+        }
+        Gio.DBus.session.call(this._active.g_name, PATH, 'org.mpris.MediaPlayer2', 'Raise',
+            null, null, Gio.DBusCallFlags.NONE, -1, null, null);
     }
 
     destroy() {
