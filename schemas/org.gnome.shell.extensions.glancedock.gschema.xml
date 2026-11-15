@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.glancedock" path="/org/gnome/shell/extensions/glancedock/">
+    <key name="dock-height" type="i">
+      <default>60</default>
+      <range min="40" max="100"/>
+      <summary>Height of the bar in pixels</summary>
+    </key>
+    <key name="bottom-offset" type="i">
+      <default>-1</default>
+      <range min="-1" max="400"/>
+      <summary>Space below the bar in pixels (-1 = automatic: above the Ubuntu Dock if it is on)</summary>
+    </key>
+    <key name="show-clock" type="b"><default>true</default><summary>Show the clock</summary></key>
+    <key name="auto-hide" type="b"><default>true</default><summary>Hide the bar until the pointer touches the bottom edge</summary></key>
+    <key name="hide-top-bar" type="b"><default>true</default><summary>Hide GNOME's top bar except in Activities</summary></key>
+    <key name="show-tailscale" type="b"><default>true</default><summary>Show Tailscale status</summary></key>
+    <key name="show-drive" type="b"><default>true</default><summary>Show Google Drive</summary></key>
+    <key name="show-bluetooth" type="b"><default>true</default><summary>Show Bluetooth</summary></key>
+    <key name="show-power" type="b"><default>true</default><summary>Show the power menu</summary></key>
+    <key name="gpu-hosts" type="as">
+      <default>['aleximu']</default>
+      <summary>Remote machines (SSH host names) whose GPUs the GPU widget shows, besides this computer</summary>
+    </key>
+    <key name="main-apps" type="as">
+      <default>['com.anthropic.Claude.desktop', 'antigravity-ide.desktop', 'antigravity.desktop', 'brave-origin.desktop', 'spotify_spotify.desktop']</default>
+      <summary>Apps shown as buttons on the bar (desktop file IDs); other open apps go behind the +N button</summary>
+    </key>
+    <key name="show-apps" type="b"><default>true</default><summary>Show pinned and running apps</summary></key>
+    <key name="show-terminal" type="b"><default>true</default><summary>Show the drop-up terminal button</summary></key>
+    <key name="terminal-conda-env" type="s">
+      <default>'mauve'</default>
+      <summary>Conda environment new terminal tabs start in (empty = your shell's default)</summary>
+    </key>
+    <key name="show-folders" type="b"><default>true</default><summary>Show the folders button</summary></key>
+    <key name="show-notes" type="b"><default>true</default><summary>Show quick notes</summary></key>
+    <key name="show-audio" type="b"><default>true</default><summary>Show volume and microphone</summary></key>
+    <key name="show-day" type="b"><default>true</default><summary>Show how much of the day has passed</summary></key>
+    <key name="notes-folder" type="s">
+      <default>''</default>
+      <summary>Folder for quick notes (empty = ~/Notes); the notes go in Inbox.md there</summary>
+    </key>
+    <key name="show-todos" type="b"><default>true</default><summary>Show the next todo</summary></key>
+    <key name="show-weather" type="b"><default>true</default><summary>Show the weather</summary></key>
+    <key name="show-pomodoro" type="b"><default>true</default><summary>Show the pomodoro timer</summary></key>
+    <key name="show-system" type="b"><default>true</default><summary>Show CPU, memory and battery</summary></key>
+    <key name="show-media" type="b"><default>true</default><summary>Show now playing</summary></key>
+    <key name="show-ai" type="b"><default>true</default><summary>Show AI usage</summary></key>
+    <key name="show-gpu" type="b"><default>true</default><summary>Show NVIDIA GPU load and memory</summary></key>
+    <key name="show-network" type="b"><default>true</default><summary>Show network speed</summary></key>
+    <key name="show-storage" type="b"><default>true</default><summary>Show disk space</summary></key>
+    <key name="show-toggles" type="b"><default>true</default><summary>Show quick toggles</summary></key>
+    <key name="weather-city" type="s">
+      <default>''</default>
+      <summary>City for the weather (empty = city of the system time zone)</summary>
+    </key>
+    <key name="weather-fahrenheit" type="b">
+      <default>false</default>
+      <summary>Show temperatures in Fahrenheit</summary>
+    </key>
+    <key name="pomodoro-work-minutes" type="i">
+      <default>25</default>
+      <range min="1" max="180"/>
+      <summary>Focus length in minutes</summary>
+    </key>
+    <key name="pomodoro-break-minutes" type="i">
+      <default>5</default>
+      <range min="1" max="60"/>
+      <summary>Break length in minutes</summary>
+    </key>
+    <key name="ai-refresh-seconds" type="i">
+      <default>120</default>
+      <range min="30" max="3600"/>
+      <summary>How often to refresh AI usage</summary>
+    </key>
+    <key name="gemini-daily-budget" type="d">
+      <default>0</default>
+      <summary>Gemini CLI requests per day (0 = show totals only)</summary>
+    </key>
+    <key name="ai-warnings" type="b">
+      <default>true</default>
+      <summary>Notify when usage is on pace to run out before it resets</summary>
+    </key>
+  </schema>
+</schemalist>

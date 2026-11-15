@@ -1,0 +1,8 @@
+{
+  "uuid": "glancedock@local",
+  "name": "Glance Dock",
+  "description": "A bottom dock with live widgets: clock, next calendar event, pomodoro, system stats, now playing and AI usage limits.",
+  "shell-version": ["46", "47", "48", "49", "50"],
+  "settings-schema": "org.gnome.shell.extensions.glancedock",
+  "url": ""
+}

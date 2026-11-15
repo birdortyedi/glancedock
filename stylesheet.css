@@ -1,0 +1,162 @@
+/* Glance Dock: an instrument panel along the bottom edge.
+   Text in the desktop font (IBM Plex Sans), every number in IBM Plex Mono.
+   Grey for things that are just there, one purple accent for "active",
+   amber for "getting close", red only for trouble.
+     text      #e8e6f0   muted  rgba(232, 230, 240, 0.5)
+     accent    #b9a7ff   warn   #f5c37a   crit #ff8a8a
+     surface   #16161d   hairline rgba(255, 255, 255, 0.08) */
+
+.glance-island {
+    background-color: rgba(22, 22, 29, 0.96);
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
+    padding: 3px 10px;
+    spacing: 8px;
+    color: #e8e6f0;
+}
+
+.glance-group { spacing: 0; }
+.glance-item { spacing: 8px; }
+
+/* Segments separated by hairlines, not boxes */
+.glance-tile {
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0 12px;
+    spacing: 12px;
+}
+.glance-tile:first-child { border-left-width: 0; padding-left: 4px; }
+.glance-tile:last-child { padding-right: 4px; }
+
+.glance-button { border-radius: 8px; padding: 2px 6px; }
+.glance-button:hover,
+.glance-button:focus { background-color: rgba(255, 255, 255, 0.07); }
+.glance-button:active { background-color: rgba(255, 255, 255, 0.12); }
+
+/* Type */
+.glance-num { font-family: IBM Plex Mono; font-feature-settings: "tnum"; }
+.glance-big { font-size: 14pt; font-weight: 500; }
+.glance-value { font-size: 10pt; font-weight: 500; }
+.glance-caption { font-size: 8.5pt; color: rgba(232, 230, 240, 0.5); }
+.glance-time { font-family: IBM Plex Mono; font-size: 13pt; font-weight: 500; }
+.glance-accent { color: #b9a7ff; }
+.glance-clip { max-width: 130px; }
+.glance-clip-short { max-width: 110px; }
+.glance-item-icon { icon-size: 16px; color: rgba(232, 230, 240, 0.7); }
+.glance-todo-done { color: rgba(232, 230, 240, 0.4); text-decoration: line-through; }
+
+/* Rings (only where there's a limit: AI quotas, focus, todos) */
+.glance-stat { spacing: 1px; }
+.glance-ring { width: 28px; height: 28px; }
+.glance-ring-value {
+    /* Digits sit high in their line box; this centres them in the ring. */
+    padding-top: 2px;
+    font-family: IBM Plex Mono;
+    font-size: 7.5pt;
+    font-weight: 500;
+}
+.glance-stat-caption { font-size: 7.5pt; color: rgba(232, 230, 240, 0.5); }
+.glance-system { spacing: 12px; }
+
+/* Bar meters: caption and value, thin bar underneath */
+.glance-barstat { spacing: 4px; min-width: 46px; }
+.glance-barstat-top { spacing: 6px; }
+.glance-bar-value { font-size: 8.5pt; }
+/* Left-side readouts: focus countdown and todos */
+.glance-focus { min-width: 58px; }
+.glance-focus .glance-bar-value { font-size: 10pt; }
+.glance-focus.glance-running .glance-bar-value { color: #b9a7ff; }
+.glance-bar-track {
+    height: 3px;
+    border-radius: 2px;
+    background-color: rgba(255, 255, 255, 0.10);
+}
+.glance-bar-fill { border-radius: 2px; background-color: #b9a7ff; }
+.glance-warn .glance-bar-fill { background-color: #f5c37a; }
+.glance-crit .glance-bar-fill { background-color: #ff8a8a; }
+
+/* GPU strip: one thin bar per GPU, a gap between machines */
+.glance-gpu-strip { spacing: 2px; }
+.glance-gpu-bar {
+    width: 6px;
+    height: 22px;
+    border-radius: 2px;
+    background-color: rgba(255, 255, 255, 0.10);
+}
+.glance-gpu-bar.glance-offline { background-color: rgba(255, 255, 255, 0.04); border: 1px dashed rgba(255, 255, 255, 0.2); }
+.glance-gpu-fill { border-radius: 2px; background-color: rgba(232, 230, 240, 0.75); }
+.glance-gpu-fill.glance-idle { background-color: #b9a7ff; }
+.glance-gpu-fill.glance-crit { background-color: #ff8a8a; }
+.glance-gpu-gap { width: 6px; }
+.glance-card-title { font-weight: 500; }
+
+.glance-warn .glance-ring-value,
+.glance-warn .glance-value { color: #f5c37a; }
+.glance-crit .glance-ring-value,
+.glance-crit .glance-value,
+.glance-crit.glance-num { color: #ff8a8a; }
+
+/* AI rings */
+.glance-ai { spacing: 10px; }
+
+/* Weather, media, buttons */
+.glance-weather-icon { icon-size: 20px; color: rgba(232, 230, 240, 0.8); }
+.glance-art { icon-size: 28px; }
+.glance-controls { spacing: 2px; }
+.glance-icon-button { border-radius: 8px; padding: 5px; color: rgba(232, 230, 240, 0.75); }
+.glance-icon-button StIcon { icon-size: 16px; }
+.glance-icon-button:hover { background-color: rgba(255, 255, 255, 0.08); color: #e8e6f0; }
+/* A service that's connected (Tailscale up, Drive mounted, Bluetooth device on) */
+.glance-icon-button.glance-active { color: #b9a7ff; }
+/* Something deliberately switched off (Do Not Disturb, mic muted) */
+.glance-icon-button.glance-on { background-color: rgba(245, 195, 122, 0.16); color: #f5c37a; }
+
+/* Alert pill: the one thing worth knowing right now */
+.glance-alert {
+    border-radius: 8px;
+    padding: 5px 12px;
+    background-color: rgba(22, 22, 29, 0.97);
+    border: 1px solid rgba(245, 195, 122, 0.55);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    color: #f5c37a;
+}
+.glance-alert.glance-crit { border-color: rgba(255, 138, 138, 0.6); color: #ff8a8a; }
+.glance-alert-box { spacing: 8px; }
+.glance-alert-label { font-size: 9pt; font-weight: 500; max-width: 480px; }
+.glance-alert StIcon { icon-size: 14px; }
+
+.glance-tooltip {
+    background-color: rgba(22, 22, 29, 0.97);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 6px 10px;
+    color: #e8e6f0;
+    font-size: 9pt;
+}
+
+/* Apps (the taskbar part) */
+.glance-apps { spacing: 2px; }
+.glance-app { border-radius: 8px; padding: 3px 4px; }
+.glance-app:hover,
+.glance-app:focus { background-color: rgba(255, 255, 255, 0.08); }
+.glance-app.glance-focused { background-color: rgba(255, 255, 255, 0.10); }
+/* Dot under every running app; a wider accent one under the focused app */
+.glance-dot { width: 4px; height: 4px; border-radius: 2px; margin-top: 2px; }
+.glance-running .glance-dot { background-color: rgba(232, 230, 240, 0.7); }
+.glance-focused .glance-dot { width: 12px; background-color: #b9a7ff; }
+
+.glance-net { min-width: 62px; spacing: 0; }
+.glance-tile.glance-clock { spacing: 0; }
+.glance-audio { spacing: 4px; }
+.glance-note { max-width: 320px; }
+.glance-slider-value { min-width: 44px; text-align: right; }
+
+/* Main apps: monochrome icons, lit on hover and when focused */
+.glance-main-app { padding: 4px 6px; }
+.glance-others { padding: 4px 8px; }
+.glance-others StLabel { font-size: 9pt; color: rgba(232, 230, 240, 0.6); }
+.glance-others:hover StLabel { color: #e8e6f0; }
+
+/* Disk card: one row per drive */
+.glance-drive { spacing: 4px; min-width: 300px; }
+.glance-drive-meter { min-width: 300px; }
+.glance-drive-meter .glance-bar-track { height: 4px; }
