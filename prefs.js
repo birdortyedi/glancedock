@@ -50,7 +50,9 @@ export default class GlanceDockPreferences extends ExtensionPreferences {
         toggle(widgets, 'show-drive', 'Google Drive', 'From Settings → Online Accounts; click to open it in Files');
         toggle(widgets, 'show-bluetooth', 'Bluetooth', 'Turn it on or off and connect paired devices');
         toggle(widgets, 'show-power', 'Power menu', 'Lock, suspend, log out, restart and power off');
-        toggle(widgets, 'show-toggles', 'Quick toggles', 'Do Not Disturb, dark style, show desktop');
+        toggle(widgets, 'show-notifications', 'Notifications', 'How many are waiting; click for the list and Do Not Disturb');
+        toggle(widgets, 'show-screenshot', 'Screenshot', 'Opens GNOME’s screenshot and recording tool');
+        toggle(widgets, 'show-toggles', 'Show desktop', 'Minimizes every window; click again to bring them back');
 
         const layout = group('Placement');
         toggle(layout, 'hide-top-bar', 'Hide the top bar',

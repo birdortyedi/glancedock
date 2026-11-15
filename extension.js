@@ -19,8 +19,10 @@ import {GpuWidget} from './widgets/gpu.js';
 import {MediaWidget} from './widgets/media.js';
 import {NetworkWidget} from './widgets/network.js';
 import {NotesWidget} from './widgets/notes.js';
+import {NotificationsWidget} from './widgets/notifications.js';
 import {PomodoroWidget} from './widgets/pomodoro.js';
 import {PowerWidget} from './widgets/power.js';
+import {ScreenshotWidget} from './widgets/screenshot.js';
 import {StorageWidget} from './widgets/storage.js';
 import {SystemWidget} from './widgets/system.js';
 import {TailscaleWidget} from './widgets/tailscale.js';
@@ -29,38 +31,49 @@ import {TodosWidget} from './widgets/todos.js';
 import {TogglesWidget} from './widgets/toggles.js';
 import {WeatherWidget} from './widgets/weather.js';
 
-// [settings key, side of the bar, class, shared tile]; each has a show-<key>
-// setting. Side widgets sit in tiles; ones naming the same tile share it.
+// [settings key, section, class]; each has a show-<key> setting. Widgets
+// naming the same section share it; sections run left to right in this order,
+// with the bar's spare room shared evenly between them.
 const WIDGETS = [
-    // Left: what you're doing
-    ['media', 'left', MediaWidget],
-    ['pomodoro', 'left', PomodoroWidget],
-    ['todos', 'left', TodosWidget, 'work'],
-    ['notes', 'left', NotesWidget, 'work'],
-    ['terminal', 'left', TerminalWidget, 'work'],
-    ['folders', 'left', FoldersWidget, 'work'],
-    ['drive', 'left', DriveWidget, 'work'],
-    // Then your main apps, as the last section on the left
-    ['apps', 'left', AppsWidget],
-    // Right: AI limits, compute, connections, controls, time, and power
-    // in the corner
-    ['ai', 'right', AiWidget],
-    ['gpu', 'right', GpuWidget, 'compute'],
-    ['system', 'right', SystemWidget, 'compute'],
-    ['storage', 'right', StorageWidget, 'compute'],
-    ['network', 'right', NetworkWidget, 'connections'],
-    ['tailscale', 'right', TailscaleWidget, 'connections'],
-    ['bluetooth', 'right', BluetoothWidget, 'connections'],
-    ['audio', 'right', AudioWidget, 'controls'],
-    ['toggles', 'right', TogglesWidget, 'controls'],
-    ['weather', 'right', WeatherWidget, 'time'],
-    ['day', 'right', DayWidget, 'time'],
-    ['clock', 'right', ClockWidget, 'time'],
-    ['power', 'right', PowerWidget],
+    // Left: music, then what you're working on
+    ['media', 'media', MediaWidget],
+    ['pomodoro', 'focus', PomodoroWidget],
+    ['todos', 'work', TodosWidget],
+    ['notes', 'work', NotesWidget],
+    ['terminal', 'work', TerminalWidget],
+    ['screenshot', 'work', ScreenshotWidget],
+    ['folders', 'work', FoldersWidget],
+    ['drive', 'work', DriveWidget],
+    // Towards the centre: your main apps, other open apps, all apps
+    ['apps', 'launch', AppsWidget],
+    // Right: the system, from AI limits out to the clock, power in the corner
+    ['ai', 'ai', AiWidget],
+    ['gpu', 'compute', GpuWidget],
+    ['system', 'compute', SystemWidget],
+    ['storage', 'compute', StorageWidget],
+    ['network', 'connections', NetworkWidget],
+    ['tailscale', 'connections', TailscaleWidget],
+    ['bluetooth', 'connections', BluetoothWidget],
+    ['audio', 'controls', AudioWidget],
+    ['toggles', 'controls', TogglesWidget],
+    ['notifications', 'controls', NotificationsWidget],
+    ['weather', 'weather', WeatherWidget],
+    ['day', 'time', DayWidget],
+    ['clock', 'time', ClockWidget],
+    ['power', 'power', PowerWidget],
 ];
 
 const GAP = 0; // space between the bar and whatever is below it
 const HIDE_DELAY = 700; // ms after the pointer leaves before the bar slides away
+const SPACER = 14; // px, the narrowest gap between sections
+
+// The gap between two sections: it takes an equal share of the spare room and
+// draws a hairline down its middle.
+function spacer() {
+    const gap = new St.Widget({style_class: 'glance-spacer', x_expand: true, layout_manager: new Clutter.BinLayout()});
+    gap.add_child(new St.Widget({style_class: 'glance-spacer-line', x_align: Clutter.ActorAlign.CENTER, y_align: Clutter.ActorAlign.CENTER}));
+    return gap;
+}
 
 // Height of the Ubuntu Dock (or Dash to Dock) when it sits along the bottom
 // of `monitor`, so the island can float just above it. 0 if there's none.
@@ -96,8 +109,8 @@ class Dock {
         // reserves the space, so maximized windows stop above the bar. Only
         // the bar itself takes clicks, so a dock below it (if any) stays usable.
         this.actor = new St.Widget({name: 'glanceDock', layout_manager: new Clutter.BinLayout()});
-        // left group (ending with the apps) | spare room | right group.
-        // _queueFit() keeps the apps within their own width plus the spare room.
+        // Sections in a row, with a spacer between each pair that takes an equal
+        // share of the spare room. _fit() keeps everything within the screen.
         this._island = new St.BoxLayout({
             style_class: 'glance-island',
             reactive: true,
@@ -107,14 +120,7 @@ class Dock {
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.START,
         });
-        this._left = new St.BoxLayout({style_class: 'glance-group', y_align: Clutter.ActorAlign.CENTER});
-        this._center = new St.Bin({x_expand: true, y_align: Clutter.ActorAlign.CENTER});
-        this._right = new St.BoxLayout({style_class: 'glance-group', y_align: Clutter.ActorAlign.CENTER});
-        this._island.add_child(this._left);
-        this._island.add_child(this._center);
-        this._island.add_child(this._right);
-        for (const part of [this._left, this._right, this._center])
-            part.connect('notify::width', () => this._queueFit());
+        this._island.connect('notify::width', () => this._queueFit());
         this.actor.add_child(this._island);
 
         this._addChrome();
@@ -158,13 +164,27 @@ class Dock {
             return;
         this._fitId = global.compositor.get_laters().add(Meta.LaterType.BEFORE_REDRAW, () => {
             this._fitId = 0;
-            const apps = this._apps?.actor;
-            if (!apps)
-                return false;
-            // The apps may use their own width plus all the spare room.
-            this._apps.fit?.(apps.width + this._center.width);
+            this._fit();
             return false;
         });
+    }
+
+    // Shares out the room itself, so the bar's total never exceeds the screen.
+    // (Left to itself, GNOME spreads any shortage over every item and trims
+    // short readouts like "11%" to "…".) Every other section keeps its full
+    // width, with the narrowest spacers; the apps get whatever is left.
+    _fit() {
+        const apps = this._apps?.actor;
+        if (!apps)
+            return;
+        const node = this._island.get_theme_node();
+        const gap = node.get_length('spacing');
+        const width = this._island.width - node.get_horizontal_padding() - 2 * gap;
+        const natural = actor => actor.get_preferred_width(-1)[1];
+        const others = [...this._tiles.values()].reduce((sum, t) => sum + natural(t), 0) - natural(apps);
+        const spacers = (this._tiles.size - 1) * SPACER * this._theme.scale_factor;
+        const room = width - others - spacers;
+        this._apps.fit(Math.max(0, room));
     }
 
     // Auto-hide doesn't reserve space: the bar slides over windows when shown.
@@ -292,8 +312,8 @@ class Dock {
     _rebuild() {
         this._widgets.forEach(w => w.destroy());
         this._widgets = [];
-        this._tiles?.forEach(t => t.destroy());
-        this._tiles = new Map(); // shared tile name -> box
+        this._island.destroy_all_children(); // sections and spacers
+        this._tiles = new Map(); // section name -> box
         const ctx = {
             extension: this._extension,
             settings: this._settings,
@@ -301,23 +321,20 @@ class Dock {
             fitApps: () => this._queueFit(),
             use12h: this._iface.get_string('clock-format') === '12h',
         };
-        for (const [key, side, WidgetClass, tile] of WIDGETS) {
+        for (const [key, section, WidgetClass] of WIDGETS) {
             if (!this._settings.get_boolean(`show-${key}`))
                 continue;
             try {
                 const widget = new WidgetClass(ctx);
-                const parent = side === 'left' ? this._left : this._right;
-                if (tile) {
-                    if (!this._tiles.has(tile)) {
-                        const box = new St.BoxLayout({style_class: 'glance-tile', y_align: Clutter.ActorAlign.CENTER});
-                        this._tiles.set(tile, box);
-                        parent.add_child(box);
-                    }
-                    this._tiles.get(tile).add_child(widget.actor);
-                } else {
-                    widget.actor.add_style_class_name('glance-tile');
-                    parent.add_child(widget.actor);
+                if (!this._tiles.has(section)) {
+                    if (this._tiles.size)
+                        this._island.add_child(spacer());
+                    const box = new St.BoxLayout({style_class: 'glance-tile', y_align: Clutter.ActorAlign.CENTER});
+                    box.connect('notify::width', () => this._queueFit());
+                    this._tiles.set(section, box);
+                    this._island.add_child(box);
                 }
+                this._tiles.get(section).add_child(widget.actor);
                 this._widgets.push(widget);
             } catch (e) {
                 console.error(`[Glance Dock] could not start the ${key} widget:`, e);

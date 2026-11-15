@@ -10,8 +10,8 @@
     background-color: rgba(22, 22, 29, 0.96);
     border-top: 1px solid rgba(255, 255, 255, 0.07);
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
-    padding: 3px 10px;
-    spacing: 8px;
+    padding: 3px 12px;
+    spacing: 0;
     color: #e8e6f0;
 }
 
@@ -19,13 +19,11 @@
 .glance-item { spacing: 8px; }
 
 /* Segments separated by hairlines, not boxes */
-.glance-tile {
-    border-left: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 0 10px;
-    spacing: 10px;
-}
-.glance-tile:first-child { border-left-width: 0; padding-left: 4px; }
-.glance-tile:last-child { padding-right: 4px; }
+/* Sections, and the spacers between them: each spacer takes an equal share of
+   the spare room, with a hairline down its middle. */
+.glance-tile { spacing: 10px; }
+.glance-spacer { min-width: 14px; }
+.glance-spacer-line { width: 1px; height: 22px; background-color: rgba(255, 255, 255, 0.08); }
 
 .glance-button { border-radius: 8px; padding: 2px 6px; }
 .glance-button:hover,
@@ -143,7 +141,6 @@
 .glance-focused .glance-dot { width: 12px; background-color: #b9a7ff; }
 
 .glance-net { min-width: 62px; spacing: 0; }
-.glance-tile.glance-clock { spacing: 0; }
 /* The clock never gives up space: the time and date always fit in full. */
 .glance-clock { min-width: 70px; }
 .glance-audio { spacing: 4px; }
@@ -173,3 +170,8 @@
 .glance-card-row { spacing: 2px; min-width: 300px; }
 .glance-card-meter { min-width: 300px; }
 .glance-card-meter .glance-bar-track { height: 4px; }
+
+/* Notifications */
+.glance-notif-count { font-size: 8.5pt; }
+.glance-notif { spacing: 2px; min-width: 320px; }
+.glance-notif-body { max-width: 320px; }

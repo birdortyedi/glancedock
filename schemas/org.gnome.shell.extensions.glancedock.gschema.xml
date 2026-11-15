@@ -33,6 +33,8 @@
       <summary>Conda environment new terminal tabs start in (empty = your shell's default)</summary>
     </key>
     <key name="show-folders" type="b"><default>true</default><summary>Show the folders button</summary></key>
+    <key name="show-notifications" type="b"><default>true</default><summary>Show notifications and Do Not Disturb</summary></key>
+    <key name="show-screenshot" type="b"><default>true</default><summary>Show the screenshot button</summary></key>
     <key name="show-notes" type="b"><default>true</default><summary>Show quick notes</summary></key>
     <key name="show-audio" type="b"><default>true</default><summary>Show volume and microphone</summary></key>
     <key name="show-day" type="b"><default>true</default><summary>Show how much of the day has passed</summary></key>

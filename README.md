@@ -2,19 +2,22 @@
 
 A GNOME Shell extension that replaces the Ubuntu Dock with one floating bar: your apps in the middle and live widgets on both sides.
 
-**Left side, what you're doing:**
+The bar runs left to right with its spare room shared evenly between the sections.
 
-- **Now playing**: any MPRIS player (Spotify, Firefox, Chrome, mpv). Hidden when nothing is playing.
+**Left: music, then what you're working on.**
+
+- **Now playing**: any MPRIS player (Spotify, Firefox, Chrome, mpv). It keeps a fixed width and says "Nothing playing" when idle; click the track to bring its player forward, or to open Spotify when idle.
 - **Pomodoro**: click to start or pause, right-click to reset.
 - **Todos**: how many tasks you've done, with a progress bar. Click it to see, tick and add tasks.
 - **Notes**: click the note icon to jot something down. Notes go to `~/Notes/Inbox.md`, and **Open in Obsidian** opens them there.
 - **Terminal**: click to slide a terminal up from the bar, and click again to hide it. Right-click for your open terminals, a new one, or ssh to your machines.
+- **Screenshot**: opens GNOME's screenshot tool for an area, a window or the screen, as a picture or a recording.
 - **Folders**: click for Home and your Files bookmarks (including Google Drive); each opens in Files.
 - **Google Drive**: from Settings → Online Accounts; click to open it in Files.
 
-**Middle: your main apps.** Claude, Antigravity IDE, Antigravity, Brave Origin and Spotify as monochrome icons that light up when you hover over them or when the app is focused. A dot marks running apps. Every other open app sits behind a `+N` button; click it to switch to one. Click an app to open or focus it, or to minimize it when it's already focused. Middle-click opens a new window, and right-click opens GNOME's app menu. The grid button shows all apps. Choose the main apps under **Main apps** in Preferences.
+**Towards the centre: your main apps.** Claude, Antigravity IDE, Antigravity, Brave Origin and Spotify as monochrome icons that light up when you hover over them or when the app is focused. A dot marks running apps. Every other open app sits behind a `+N` button; click it to switch to one. Click an app to open or focus it, or to minimize it when it's already focused. Middle-click opens a new window, and right-click opens GNOME's app menu. The grid button shows all apps. Choose the main apps under **Main apps** in Preferences.
 
-**Right side:**
+**Right: the system.**
 
 - **AI limits**: drawn like the GPUs, with a thin bar per limit and the highest percentage: Claude (a rate-limit watch for Claude Code), Gemini and AG Claude (Claude and GPT-OSS models in Antigravity), and any you add yourself. Click for each limit's usage, reset time and details.
 - **Compute**: your GPUs (this computer and remote machines), CPU, memory and battery meters, and the fullest drive. Click the disk meter for every drive (click one to see what fills it in Disk Usage Analyzer) and GNOME's disk tools: Disk Usage Analyzer, Disks for partitions, and System Monitor's file systems.
@@ -22,7 +25,7 @@ A GNOME Shell extension that replaces the Ubuntu Dock with one floating bar: you
   - **Network**: download and upload speed.
   - **Tailscale**: whether you're connected, plus your devices; click one to copy its IP.
   - **Bluetooth**: on or off, plus your paired devices; click a device to connect it.
-- **Controls**: volume (click for output and microphone sliders, scroll to change), microphone mute, Do Not Disturb, dark or light style, and show desktop.
+- **Controls**: volume (click for output and microphone sliders, scroll to change), microphone mute, show desktop, and notifications: a bell with how many are waiting (crossed out during Do Not Disturb); click it for the list, the Do Not Disturb switch and **Clear all**.
 - **Time**: the weather, a meter for how much of today has passed, then the time and date.
 - **Power**: lock, suspend, log out, restart or power off. The last three ask for confirmation, as GNOME's own menu does.
 
