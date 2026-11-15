@@ -80,13 +80,19 @@ export class AppsWidget extends Widget {
     }
 
     _gridButton() {
+        // No keyboard focus: the overview must get Esc and typing, not this button.
         const grid = new St.Button({
             style_class: 'glance-app',
             child: new St.Icon({icon_name: 'view-app-grid-symbolic', icon_size: 20}),
-            can_focus: true,
+            can_focus: false,
         });
-        grid.connect('clicked', () => Main.overview.showApps());
-        addTooltip(grid, () => 'All apps');
+        grid.connect('clicked', () => {
+            if (Main.overview.visible)
+                Main.overview.hide(); // a second click closes it
+            else
+                Main.overview.showApps();
+        });
+        addTooltip(grid, () => (Main.overview.visible ? 'Close' : 'All apps'));
         return grid;
     }
 
