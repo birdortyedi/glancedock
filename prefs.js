@@ -48,6 +48,7 @@ export default class GlanceDockPreferences extends ExtensionPreferences {
         toggle(widgets, 'show-day', 'Day progress', 'How much of today has passed');
         toggle(widgets, 'show-tailscale', 'Tailscale', 'Connection and online devices; click a device to copy its IP');
         toggle(widgets, 'show-drive', 'Google Drive', 'From Settings → Online Accounts; click to open it in Files');
+        toggle(widgets, 'show-mail', 'Outlook, Teams and Gmail', 'Notifications waiting in Outlook and Teams; unread Gmail through Online Accounts');
         toggle(widgets, 'show-bluetooth', 'Bluetooth', 'Turn it on or off and connect paired devices');
         toggle(widgets, 'show-power', 'Power menu', 'Lock, suspend, log out, restart and power off');
         toggle(widgets, 'show-notifications', 'Notifications', 'How many are waiting; click for the list and Do Not Disturb');

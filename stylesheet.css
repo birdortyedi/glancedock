@@ -156,5 +156,6 @@
 
 /* Notifications */
 .glance-notif-count { font-size: 8.5pt; }
+.glance-mail-count { font-size: 8.5pt; color: #b9a7ff; padding-left: 3px; }
 .glance-notif { spacing: 2px; min-width: 320px; }
 .glance-notif-body { max-width: 320px; }

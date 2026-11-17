@@ -19,6 +19,7 @@ import {GpuWidget} from './widgets/gpu.js';
 import {MediaWidget} from './widgets/media.js';
 import {NetworkWidget} from './widgets/network.js';
 import {NotesWidget} from './widgets/notes.js';
+import {MailWidget} from './widgets/mail.js';
 import {NotificationsWidget} from './widgets/notifications.js';
 import {PomodoroWidget} from './widgets/pomodoro.js';
 import {PowerWidget} from './widgets/power.js';
@@ -44,6 +45,7 @@ const WIDGETS = [
     ['screenshot', 'work', ScreenshotWidget],
     ['folders', 'work', FoldersWidget],
     ['drive', 'work', DriveWidget],
+    ['mail', 'mail', MailWidget],
     // Towards the centre: your main apps, other open apps, all apps
     ['apps', 'launch', AppsWidget],
     // Right: the system, from AI limits out to the clock, power in the corner

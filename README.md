@@ -23,6 +23,7 @@ The bar runs left to right with its spare room shared evenly between the section
 - **Screenshot**: opens GNOME's screenshot tool for an area, a window or the screen, as a picture or a recording.
 - **Folders**: click for Home and your Files bookmarks (including Google Drive); each opens in Files.
 - **Google Drive**: from Settings → Online Accounts; click to open it in Files.
+- **Mail & chat**: Outlook, Teams and Gmail. Outlook and Teams show how many of their notifications are waiting (their web apps can't report unread counts on Linux); Gmail shows unread mail in your Primary inbox, read with your Google account from Settings → Online Accounts (Mail on). Click to open or focus each one.
 
 **Towards the centre: your main apps.** Claude, Antigravity IDE, Antigravity, Brave Origin and Spotify as monochrome icons that light up when you hover over them or when the app is focused. A dot marks running apps. Every other open app sits behind a `+N` button; click it to switch to one. Click an app to open or focus it, or to minimize it when it's already focused. Middle-click opens a new window, and right-click opens GNOME's app menu. The grid button shows all apps. Choose the main apps under **Main apps** in Preferences.
 
